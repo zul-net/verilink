@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VeriLink — URL Threat Detection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="nav-mark">VeriLink</div>
+    <div class="nav-tag">URL threat detection</div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow">Multi-layered scanning</div>
+    <h1>Check a link before you trust it.</h1>
+    <p>VeriLink cross-references a URL against Google Safe Browsing and VirusTotal's 70+ security engines to flag malware, phishing, and unwanted software before you click.</p>
+  </section>
+
+  <section class="scan-box">
+    <form id="scan-form">
+      <input
+        type="text"
+        id="url-input"
+        placeholder="Paste a URL to check — e.g. https://example.com"
+        autocomplete="off"
+        required
+      />
+      <button type="submit" id="scan-btn">Scan URL</button>
+    </form>
+    <p class="hint">Scans usually take just a few seconds. We don't store the URLs you check.</p>
+  </section>
+
+  <section id="results" class="results hidden">
+    <div class="verdict-card" id="verdict-card">
+      <div class="verdict-badge" id="verdict-badge"></div>
+      <div>
+        <div class="verdict-label" id="verdict-label"></div>
+        <div class="verdict-url" id="verdict-url"></div>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-card">
+        <div class="detail-head">
+          <h3>Google Safe Browsing</h3>
+          <span class="detail-status" id="gsb-status"></span>
+        </div>
+        <div id="gsb-body" class="detail-body"></div>
+      </div>
+
+      <div class="detail-card">
+        <div class="detail-head">
+          <h3>VirusTotal</h3>
+          <span class="detail-status" id="vt-status"></span>
+        </div>
+        <div id="vt-body" class="detail-body"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="error-box" class="error-box hidden"></section>
+</main>
+
+<footer>
+  <div class="wrap">Built by Ahmad Zulfadhli</div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
