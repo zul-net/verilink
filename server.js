@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const fetch = require('node-fetch');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,6 +12,19 @@ const VT_KEY = process.env.VIRUSTOTAL_API_KEY;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Limit each visitor to 10 scans per 15 minutes — protects your VirusTotal/
+// Google Safe Browsing quota and Render usage hours from abuse or bots.
+// Render sits behind a proxy, so trust it to read the real visitor IP.
+app.set('trust proxy', 1);
+
+const scanLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many scans from this device. Please wait a few minutes and try again.' },
+});
 
 // ---- Helpers ----
 
@@ -156,7 +170,7 @@ function buildVerdict(gsb, vt) {
 }
 
 // ---- API route ----
-app.post('/api/check', async (req, res) => {
+app.post('/api/check', scanLimiter, async (req, res) => {
   const { url } = req.body;
 
   if (!url || !isValidUrl(url)) {
