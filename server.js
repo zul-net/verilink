@@ -38,6 +38,13 @@ app.use(
   })
 );
 
+// Helmet doesn't set Permissions-Policy by default — this app doesn't need
+// camera, microphone, or location access, so explicitly block all three.
+app.use((req, res, next) => {
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Limit each visitor to 10 scans per 15 minutes — protects your VirusTotal/

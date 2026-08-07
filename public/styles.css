@@ -123,6 +123,27 @@ a.nav-mark:hover {
 }
 #scan-btn:hover { background: var(--accent); }
 #scan-btn:disabled { opacity: 0.6; cursor: wait; }
+
+.btn {
+  display: inline-block;
+  padding: 12px 22px;
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.btn-ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .hint {
   margin-top: 12px;
   font-size: 0.82rem;
@@ -245,9 +266,9 @@ footer a:hover {
 @media (max-width: 480px) {
   .wrap { padding: 0 20px; }
   .nav {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+    flex-wrap: wrap;
+    row-gap: 4px;
   }
+  .nav-tag { font-size: 0.78rem; }
   header { padding: 18px 0; }
 }
