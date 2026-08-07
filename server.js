@@ -3,6 +3,7 @@ const express = require('express');
 const fetch = require('node-fetch');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,6 +12,32 @@ const GSB_KEY = process.env.GOOGLE_SAFE_BROWSING_API_KEY;
 const VT_KEY = process.env.VIRUSTOTAL_API_KEY;
 
 app.use(express.json());
+
+// Security headers — HSTS, CSP, clickjacking protection, and more, all in one.
+// CSP is customized to allow the Google Fonts this app actually uses; nothing broader.
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:"],
+        connectSrc: ["'self'"],
+        frameAncestors: ["'none'"], // blocks clickjacking (site can't be iframed)
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+      },
+    },
+    hsts: {
+      maxAge: 31536000, // 1 year, standard HSTS duration
+      includeSubDomains: true,
+      preload: true,
+    },
+  })
+);
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Limit each visitor to 10 scans per 15 minutes — protects your VirusTotal/

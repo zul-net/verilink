@@ -34,6 +34,10 @@ h1, h2, h3 {
   margin: 0 auto;
   padding: 0 32px;
 }
+.legal-main {
+  padding-top: 48px;
+  padding-bottom: 64px;
+}
 
 header {
   border-bottom: 1px solid var(--line);
@@ -48,6 +52,12 @@ header {
   font-family: 'Fraunces', serif;
   font-size: 1.2rem;
   font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+}
+a.nav-mark:visited,
+a.nav-mark:hover {
+  color: var(--ink);
 }
 .nav-tag {
   font-size: 0.85rem;
@@ -218,8 +228,26 @@ footer {
   color: var(--ink-soft);
   text-align: center;
 }
+footer a {
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+footer a:hover {
+  color: var(--accent);
+}
 
 @media (max-width: 640px) {
   .detail-grid { grid-template-columns: 1fr; }
   #scan-form { flex-direction: column; }
+}
+
+@media (max-width: 480px) {
+  .wrap { padding: 0 20px; }
+  .nav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  header { padding: 18px 0; }
 }

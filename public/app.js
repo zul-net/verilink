@@ -1,4 +1,4 @@
-const form = document.getElementById('scan-form');
+const scanContainer = document.getElementById('scan-form');
 const input = document.getElementById('url-input');
 const btn = document.getElementById('scan-btn');
 const results = document.getElementById('results');
@@ -16,8 +16,7 @@ const vtBody = document.getElementById('vt-body');
 
 const BADGES = { danger: '⚠', warning: '!', safe: '✓', unknown: '?' };
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
+async function runScan() {
   const url = input.value.trim();
   if (!url) return;
 
@@ -46,6 +45,14 @@ form.addEventListener('submit', async (e) => {
   } finally {
     btn.disabled = false;
     btn.textContent = 'Scan URL';
+  }
+}
+
+btn.addEventListener('click', runScan);
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    runScan();
   }
 });
 
