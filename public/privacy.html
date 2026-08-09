@@ -14,37 +14,45 @@
 
 <header>
   <div class="wrap nav">
-    <a href="/" class="nav-mark">VeriLink</a>
-    <div class="nav-tag">URL threat detection</div>
+    <div>
+      <a href="/" class="nav-mark">VeriLink</a>
+      <div class="nav-tag">URL threat detection</div>
+    </div>
+    <button type="button" id="theme-toggle" class="btn btn-ghost theme-switch" aria-pressed="false" aria-label="Switch to dark mode">
+      <span class="switch-track" aria-hidden="true">
+        <span class="switch-knob"></span>
+      </span>
+    </button>
   </div>
 </header>
 
 <main class="wrap legal-main">
-  <h1 style="font-size: 1.8rem; margin-bottom: 8px;">Privacy</h1>
-  <p style="color: var(--ink-soft); font-size: 0.85rem; margin-bottom: 32px;">Last updated: August 2026</p>
+  <h1 class="legal-title">Privacy</h1>
+  <p class="legal-updated">Last updated: August 2026</p>
 
-  <div style="color: var(--ink-soft); font-size: 0.95rem; line-height: 1.7; max-width: 60ch;">
-    <p style="margin-bottom: 20px;">VeriLink is a simple tool: paste a URL, it gets checked, you see the result. Here's exactly what happens to your data.</p>
+  <div class="legal-copy">
+    <p>VeriLink is a simple tool: paste a URL, it gets checked, you see the result. Here's exactly what happens to your data.</p>
 
-    <h2 style="font-family: 'Fraunces', serif; font-size: 1.15rem; color: var(--ink); margin: 28px 0 10px;">What we don't collect</h2>
-    <p style="margin-bottom: 20px;">We don't require an account, don't use cookies, and don't log or store the URLs you submit. Each scan is processed and forgotten — nothing is saved to a database on our end.</p>
+    <h2>What we don't collect</h2>
+    <p>We don't require an account, don't use cookies, and don't log or store the URLs you submit. Each scan is processed and forgotten — nothing is saved to a database on our end.</p>
 
-    <h2 style="font-family: 'Fraunces', serif; font-size: 1.15rem; color: var(--ink); margin: 28px 0 10px;">Third-party services</h2>
-    <p style="margin-bottom: 20px;">To check a URL, we send it to two external security services: <strong>Google Safe Browsing</strong> and <strong>VirusTotal</strong>. This is the entire point of the tool — that's how the threat check works. Each service processes the URL under its own privacy policy, which we don't control.</p>
+    <h2>Third-party services</h2>
+    <p>To check a URL, we send it to two external security services: <strong>Google Safe Browsing</strong> and <strong>VirusTotal</strong>. This is the entire point of the tool — that's how the threat check works. Each service processes the URL under its own privacy policy, which we don't control.</p>
 
-    <h2 style="font-family: 'Fraunces', serif; font-size: 1.15rem; color: var(--ink); margin: 28px 0 10px;">Basic server logs</h2>
-    <p style="margin-bottom: 20px;">Our hosting provider (Render) may keep standard technical logs (like IP addresses and request timestamps) for a short period, purely for abuse prevention and uptime monitoring — this is standard infrastructure practice, not something VeriLink itself collects or has access to for tracking purposes.</p>
+    <h2>Basic server logs</h2>
+    <p>Our hosting provider (Render) may keep standard technical logs (like IP addresses and request timestamps) for a short period, purely for abuse prevention and uptime monitoring — this is standard infrastructure practice, not something VeriLink itself collects or has access to for tracking purposes.</p>
 
-    <h2 style="font-family: 'Fraunces', serif; font-size: 1.15rem; color: var(--ink); margin: 28px 0 10px;">Contact</h2>
-    <p>Questions? Reach out at <a href="mailto:ahmadzulfadhli18@gmail.com" style="color: var(--accent);">ahmadzulfadhli18@gmail.com</a>.</p>
+    <h2>Contact</h2>
+    <p>Questions? Reach out at <a href="mailto:ahmadzulfadhli18@gmail.com" class="legal-link">ahmadzulfadhli18@gmail.com</a>.</p>
   </div>
 
-  <a href="/" class="btn btn-ghost" style="margin-top: 32px;">&larr; Back to VeriLink</a>
+  <a href="/" class="btn btn-ghost legal-back">&larr; Back to VeriLink</a>
 </main>
 
 <footer>
-  <div class="wrap">Built by Ahmad Zulfadhli — final year project, 2025 &middot; <a href="terms.html">Terms</a></div>
+  <div class="wrap">Built by Ahmad Zulfadhli &middot; <a href="terms.html">Terms</a></div>
 </footer>
 
+  <script src="theme.js"></script>
 </body>
 </html>

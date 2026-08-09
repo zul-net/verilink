@@ -14,43 +14,51 @@
 
 <header>
   <div class="wrap nav">
-    <a href="/" class="nav-mark">VeriLink</a>
-    <div class="nav-tag">URL threat detection</div>
+    <div>
+      <a href="/" class="nav-mark">VeriLink</a>
+      <div class="nav-tag">URL threat detection</div>
+    </div>
+    <button type="button" id="theme-toggle" class="btn btn-ghost theme-switch" aria-pressed="false" aria-label="Switch to dark mode">
+      <span class="switch-track" aria-hidden="true">
+        <span class="switch-knob"></span>
+      </span>
+    </button>
   </div>
 </header>
 
 <main class="wrap legal-main">
-  <h1 style="font-size: 1.8rem; margin-bottom: 8px;">Terms of Service</h1>
-  <p style="color: var(--ink-soft); font-size: 0.85rem; margin-bottom: 32px;">Last updated: August 2026</p>
+  <h1 class="legal-title">Terms of Service</h1>
+  <p class="legal-updated">Last updated: August 2026</p>
 
-  <div style="color: var(--ink-soft); font-size: 0.95rem; line-height: 1.7; max-width: 60ch;">
-    <p style="margin-bottom: 20px;">By using VeriLink, you agree to the following. It's short because the tool is simple.</p>
+  <div class="legal-copy">
+    <p>By using VeriLink, you agree to the following. It's short because the tool is simple.</p>
 
-    <h2 style="font-family: 'Fraunces', serif; font-size: 1.15rem; color: var(--ink); margin: 28px 0 10px;">What VeriLink does</h2>
-    <p style="margin-bottom: 20px;">VeriLink checks a URL you submit against Google Safe Browsing and VirusTotal and shows you what those services report. It's a helper, not a guarantee.</p>
+    <h2>What VeriLink does</h2>
+    <p>VeriLink checks a URL you submit against Google Safe Browsing and VirusTotal and shows you what those services report. It's a helper, not a guarantee.</p>
 
-    <h2 style="font-family: 'Fraunces', serif; font-size: 1.15rem; color: var(--ink); margin: 28px 0 10px;">No warranty on results</h2>
-    <p style="margin-bottom: 20px;"><strong>A "clean" result doesn't mean a URL is definitely safe</strong>, and a "flagged" result doesn't always mean it's definitely malicious — we're only as accurate as the third-party services we query. Always use your own judgment before visiting a link, especially for anything sensitive.</p>
+    <h2>No warranty on results</h2>
+    <p><strong>A "clean" result doesn't mean a URL is definitely safe</strong>, and a "flagged" result doesn't always mean it's definitely malicious — we're only as accurate as the third-party services we query. Always use your own judgment before visiting a link, especially for anything sensitive.</p>
 
-    <h2 style="font-family: 'Fraunces', serif; font-size: 1.15rem; color: var(--ink); margin: 28px 0 10px;">Acceptable use</h2>
-    <p style="margin-bottom: 20px;">Don't attempt to abuse, overload, or circumvent the rate limits on this tool, and don't use it as part of an automated system without asking first. It's built for individual, casual use.</p>
+    <h2>Acceptable use</h2>
+    <p>Don't attempt to abuse, overload, or circumvent the rate limits on this tool, and don't use it as part of an automated system without asking first. It's built for individual, casual use.</p>
 
-    <h2 style="font-family: 'Fraunces', serif; font-size: 1.15rem; color: var(--ink); margin: 28px 0 10px;">No liability</h2>
-    <p style="margin-bottom: 20px;">VeriLink is provided "as is," free of charge, with no warranty of any kind. We're not liable for any harm resulting from a link this tool marked as safe, or for the tool being temporarily unavailable.</p>
+    <h2>No liability</h2>
+    <p>VeriLink is provided "as is," free of charge, with no warranty of any kind. We're not liable for any harm resulting from a link this tool marked as safe, or for the tool being temporarily unavailable.</p>
 
-    <h2 style="font-family: 'Fraunces', serif; font-size: 1.15rem; color: var(--ink); margin: 28px 0 10px;">Changes</h2>
-    <p style="margin-bottom: 20px;">These terms may be updated as the tool evolves. Continued use after a change means you accept the update.</p>
+    <h2>Changes</h2>
+    <p>These terms may be updated as the tool evolves. Continued use after a change means you accept the update.</p>
 
-    <h2 style="font-family: 'Fraunces', serif; font-size: 1.15rem; color: var(--ink); margin: 28px 0 10px;">Contact</h2>
-    <p>Questions? Reach out at <a href="mailto:ahmadzulfadhli18@gmail.com" style="color: var(--accent);">ahmadzulfadhli18@gmail.com</a>.</p>
+    <h2>Contact</h2>
+    <p>Questions? Reach out at <a href="mailto:ahmadzulfadhli18@gmail.com" class="legal-link">ahmadzulfadhli18@gmail.com</a>.</p>
   </div>
 
-  <a href="/" class="btn btn-ghost" style="margin-top: 32px;">&larr; Back to VeriLink</a>
+  <a href="/" class="btn btn-ghost legal-back">&larr; Back to VeriLink</a>
 </main>
 
 <footer>
-  <div class="wrap">Built by Ahmad Zulfadhli — final year project, 2025 &middot; <a href="privacy.html">Privacy</a></div>
+  <div class="wrap">Built by Ahmad Zulfadhli &middot; <a href="privacy.html">Privacy</a></div>
 </footer>
 
+  <script src="theme.js"></script>
 </body>
 </html>
