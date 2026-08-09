@@ -13,8 +13,14 @@ const gsbStatus = document.getElementById('gsb-status');
 const gsbBody = document.getElementById('gsb-body');
 const vtStatus = document.getElementById('vt-status');
 const vtBody = document.getElementById('vt-body');
+const historySection = document.getElementById('history-section');
+const historyList = document.getElementById('history-list');
+const clearHistoryBtn = document.getElementById('clear-history-btn');
+const historyToggleBtn = document.getElementById('history-toggle-btn');
 
+const HISTORY_KEY = 'verilink-scan-history';
 const BADGES = { danger: '⚠', warning: '!', safe: '✓', unknown: '?' };
+let historyExpanded = false;
 
 async function runScan() {
   const url = input.value.trim();
@@ -39,6 +45,12 @@ async function runScan() {
     }
 
     renderResults(data);
+    addScanHistory({
+      url: data.url,
+      level: data.verdict.level,
+      label: data.verdict.label,
+      scannedAt: new Date().toISOString()
+    });
   } catch (err) {
     errorBox.textContent = err.message;
     errorBox.classList.remove('hidden');
@@ -48,6 +60,58 @@ async function runScan() {
   }
 }
 
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(items) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
+}
+
+function addScanHistory(entry) {
+  const history = loadHistory();
+  history.unshift(entry);
+  saveHistory(history.slice(0, 10));
+  renderHistory();
+}
+
+function renderHistory() {
+  const history = loadHistory();
+
+  if (!history.length) {
+    historySection.classList.add('hidden');
+    historyList.innerHTML = '';
+    if (historyToggleBtn) historyToggleBtn.classList.add('hidden');
+    return;
+  }
+
+  historySection.classList.remove('hidden');
+  if (historyToggleBtn) {
+    historyToggleBtn.classList.toggle('hidden', history.length <= 1);
+    historyToggleBtn.textContent = historyExpanded ? 'Hide history' : `Show all scans (${history.length})`;
+  }
+
+  const itemsToRender = historyExpanded || history.length === 1 ? history : history.slice(0, 1);
+  historyList.innerHTML = itemsToRender
+    .map((item) => {
+      const when = new Date(item.scannedAt).toLocaleString();
+      return `
+        <div class="history-item">
+          <div class="history-details">
+            <div class="history-url">${item.url}</div>
+            <div class="history-meta">${item.label} · ${when}</div>
+          </div>
+          <span class="history-badge ${item.level}">${BADGES[item.level] || '?'}</span>
+        </div>
+      `;
+    })
+    .join('');
+}
+
 btn.addEventListener('click', runScan);
 input.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
@@ -55,6 +119,21 @@ input.addEventListener('keydown', (e) => {
     runScan();
   }
 });
+
+if (historyToggleBtn) {
+  historyToggleBtn.addEventListener('click', () => {
+    historyExpanded = !historyExpanded;
+    renderHistory();
+  });
+}
+
+clearHistoryBtn.addEventListener('click', () => {
+  localStorage.removeItem(HISTORY_KEY);
+  historyExpanded = false;
+  renderHistory();
+});
+
+renderHistory();
 
 function renderResults(data) {
   const { url, verdict, googleSafeBrowsing, virusTotal } = data;

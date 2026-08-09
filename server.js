@@ -7,11 +7,22 @@ const helmet = require('helmet');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const FETCH_TIMEOUT_MS = 15_000;
 
 const GSB_KEY = process.env.GOOGLE_SAFE_BROWSING_API_KEY;
 const VT_KEY = process.env.VIRUSTOTAL_API_KEY;
+const TRUST_PROXY = process.env.TRUST_PROXY ?? 1;
 
 app.use(express.json());
+
+function fetchWithTimeout(url, options = {}, timeout = FETCH_TIMEOUT_MS) {
+  const timeoutPromise = new Promise((_, reject) => {
+    const id = setTimeout(() => reject(new Error(`Request timed out after ${timeout}ms`)), timeout);
+    options.signal?.addEventListener('abort', () => clearTimeout(id));
+  });
+
+  return Promise.race([fetch(url, options), timeoutPromise]);
+}
 
 // Security headers — HSTS, CSP, clickjacking protection, and more, all in one.
 // CSP is customized to allow the Google Fonts this app actually uses; nothing broader.
@@ -50,7 +61,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Limit each visitor to 10 scans per 15 minutes — protects your VirusTotal/
 // Google Safe Browsing quota and Render usage hours from abuse or bots.
 // Render sits behind a proxy, so trust it to read the real visitor IP.
-app.set('trust proxy', 1);
+app.set('trust proxy', TRUST_PROXY);
 
 const scanLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -99,7 +110,7 @@ async function checkGoogleSafeBrowsing(targetUrl) {
     }
   };
 
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${GSB_KEY}`,
     {
       method: 'POST',
@@ -129,13 +140,13 @@ async function checkVirusTotal(targetUrl) {
   const id = vtUrlId(targetUrl);
 
   // Try to fetch an existing analysis first (fast path, no quota spent on submission)
-  let res = await fetch(`https://www.virustotal.com/api/v3/urls/${id}`, {
+  let res = await fetchWithTimeout(`https://www.virustotal.com/api/v3/urls/${id}`, {
     headers: { 'x-apikey': VT_KEY }
   });
 
   if (res.status === 404) {
     // Not scanned before — submit it
-    const submitRes = await fetch('https://www.virustotal.com/api/v3/urls', {
+    const submitRes = await fetchWithTimeout('https://www.virustotal.com/api/v3/urls', {
       method: 'POST',
       headers: {
         'x-apikey': VT_KEY,
@@ -156,7 +167,7 @@ async function checkVirusTotal(targetUrl) {
     let stats = null;
     for (let i = 0; i < 6; i++) {
       await new Promise(r => setTimeout(r, 2500));
-      const analysisRes = await fetch(
+      const analysisRes = await fetchWithTimeout(
         `https://www.virustotal.com/api/v3/analyses/${analysisId}`,
         { headers: { 'x-apikey': VT_KEY } }
       );

@@ -313,30 +313,19 @@ a.nav-mark:hover {
   padding: 6px;
 }
 
-.theme-switch .icon {
+.switch-knob .knob-icon {
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 22px;
-  height: 22px;
-  display: inline-flex;
+  inset: 0;
+  display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(0,0,0,0.65);
-  opacity: 0.9;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.92);
-  box-shadow: 0 4px 10px rgba(18,37,78,0.06);
-  transition: opacity 0.16s ease, color 0.16s ease, transform 0.16s ease, background 0.16s ease;
+  pointer-events: none;
 }
 
-.theme-switch .icon svg { width: 16px; height: 16px; display: block; }
-.theme-switch .icon svg circle,
-.theme-switch .icon svg path,
-.theme-switch .icon svg line { stroke: currentColor; fill: currentColor; stroke-width: 0.9px; }
-
-.theme-switch .icon-sun { left: 10px; color: #ff8a00; }
-.theme-switch .icon-moon { right: 10px; color: #2b6f52; }
+.switch-knob .knob-icon svg { width: 18px; height: 18px; display: block; }
+.switch-knob .knob-icon svg circle,
+.switch-knob .knob-icon svg path,
+.switch-knob .knob-icon svg line { stroke: currentColor; fill: currentColor; stroke-width: 0.9px; }
 
 .theme-switch .switch-knob {
   position: absolute;
@@ -348,31 +337,35 @@ a.nav-mark:hover {
   border-radius: 50%;
   background: var(--card);
   border: 1px solid rgba(0,0,0,0.08);
-  transition: transform 0.22s cubic-bezier(.2,.9,.3,1), background 0.18s, border-color 0.18s, box-shadow 0.18s;
+  transition: left 0.22s cubic-bezier(.2,.9,.3,1), background 0.18s, border-color 0.18s, box-shadow 0.18s;
   box-shadow: 0 10px 30px rgba(2,6,12,0.12);
 }
 
-/* Light (default) - emphasize sun */
+/* Light (default) - emphasize sun inside knob */
 .theme-switch:not(.dark) {
   border-color: rgba(0,0,0,0.12);
 }
-.theme-switch:not(.dark) .icon-sun { opacity: 1; transform: translateY(-50%) scale(1.05); }
-.theme-switch:not(.dark) .icon-moon { opacity: 0.45; transform: translateY(-50%) scale(0.98); }
+.theme-switch:not(.dark) .switch-knob { color: #ff8a00; background: #ffffff; }
+.theme-switch:not(.dark) .knob-sun { opacity: 1; }
+.theme-switch:not(.dark) .knob-moon { opacity: 0; }
 
-/* Dark - emphasize moon and move knob to the right */
+/* Dark - emphasize moon and move knob to the right using left calc */
 .theme-switch.dark {
   background: linear-gradient(90deg, #0b1114, #0f161a);
   border-color: rgba(255,255,255,0.12);
   box-shadow: 0 8px 28px rgba(0,0,0,0.45);
 }
 .theme-switch.dark .switch-knob {
-  transform: translate(40px, -50%);
+  left: calc(100% - 8px - 30px);
   background: #0d3b2a;
+  color: #f4f7fc;
   border-color: rgba(255,255,255,0.06);
   box-shadow: 0 12px 32px rgba(0,0,0,0.5);
 }
-.theme-switch.dark .icon-moon { opacity: 1; transform: translateY(-50%) scale(1.05); color: #f4f7fc; background: rgba(255,255,255,0.06); box-shadow: none; }
-.theme-switch.dark .icon-sun { opacity: 0.35; color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.02); }
+.theme-switch.dark .knob-sun { opacity: 0; }
+.theme-switch.dark .knob-moon { opacity: 1; }
+
+
 
 .theme-switch:hover { border-color: var(--accent); }
 
