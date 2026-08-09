@@ -285,8 +285,8 @@ a.nav-mark:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 32px;
+  width: 72px;
+  height: 40px;
   padding: 0;
   border-radius: 999px;
   border: 1px solid var(--line);
@@ -294,8 +294,14 @@ a.nav-mark:hover {
   color: transparent;
   font-size: 0;
   overflow: visible;
-  box-shadow: none;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 2px 6px rgba(18,37,78,0.06);
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.theme-switch:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(77, 136, 102, 0.12);
+  border-color: var(--accent);
 }
 
 .theme-switch .switch-track {
@@ -304,53 +310,61 @@ a.nav-mark:hover {
   height: 100%;
   position: relative;
   border-radius: 999px;
+  padding: 6px;
 }
+
+.theme-switch .icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0,0,0,0.5);
+  opacity: 0.35;
+  transition: opacity 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.theme-switch .icon-sun { left: 10px; color: #ff8a00; }
+.theme-switch .icon-moon { right: 10px; color: #9cc7a7; }
 
 .theme-switch .switch-knob {
   position: absolute;
   top: 50%;
-  left: 4px;
-  width: 24px;
-  height: 24px;
+  left: 6px;
+  width: 28px;
+  height: 28px;
   transform: translateY(-50%);
   border-radius: 50%;
   background: var(--card);
   border: 1px solid rgba(0,0,0,0.06);
-  transition: transform 0.22s cubic-bezier(.2,.9,.3,1), background 0.22s, border-color 0.22s;
-  box-shadow: 0 1px 2px rgba(18,37,78,0.06);
+  transition: transform 0.22s cubic-bezier(.2,.9,.3,1), background 0.18s, border-color 0.18s;
+  box-shadow: 0 6px 20px rgba(18,37,78,0.08);
 }
 
-.theme-switch::before {
-  content: '☀';
-  position: absolute;
-  left: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.9rem;
-  color: #e0a84b;
-  transition: opacity 0.18s ease, transform 0.18s ease;
-  opacity: 1;
-}
+/* Light (default) - highlight sun */
+.theme-switch:not(.dark) .icon-sun { opacity: 1; transform: translateY(-50%) scale(1.02); }
+.theme-switch:not(.dark) .icon-moon { opacity: 0.25; }
 
+/* Dark - highlight moon and move knob to the right */
 .theme-switch.dark {
-  background: linear-gradient(90deg, #162028, #0f1720);
+  background: linear-gradient(90deg, #11161b, #1a2228);
   border-color: rgba(255,255,255,0.06);
+  box-shadow: 0 6px 18px rgba(2,6,12,0.28);
 }
-
 .theme-switch.dark .switch-knob {
-  transform: translate(24px, -50%);
-  background: var(--card);
+  transform: translate(34px, -50%);
+  background: #ffffff;
   border-color: rgba(255,255,255,0.06);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  box-shadow: 0 6px 18px rgba(2,6,12,0.28);
 }
+.theme-switch.dark .icon-moon { opacity: 1; transform: translateY(-50%) scale(1.02); color: #f4f7fc; }
+.theme-switch.dark .icon-sun { opacity: 0.25; color: rgba(255,255,255,0.35); }
 
-.theme-switch.dark::before {
-  content: '☾';
-  right: 8px;
-  left: auto;
-  color: #f4f7fc;
-  opacity: 1;
-}
+.theme-switch:hover { border-color: var(--accent); }
+
 
 .theme-switch:hover {
   border-color: var(--accent);
