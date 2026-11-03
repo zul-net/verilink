@@ -104,11 +104,20 @@ async function checkVirusTotal(url) {
   } catch { return { checked: false, error: 'Request failed' }; }
 }
 
+// A single engine out of ~90 flagging a URL is very often a false positive,
+// so VirusTotal needs several engines to agree before we call a URL dangerous.
+const VT_DANGER_THRESHOLD = 3;
+
 function buildVerdict(gsb, vt) {
-  if ((gsb.checked && gsb.flagged) || (vt.checked && vt.malicious > 0))
+  if ((gsb.checked && gsb.flagged) || (vt.checked && vt.malicious >= VT_DANGER_THRESHOLD))
     return { level: 'danger', label: 'Dangerous — do not visit this site' };
-  if (vt.checked && vt.suspicious > 0)
-    return { level: 'warning', label: 'Suspicious — proceed with caution' };
+  if (vt.checked && (vt.malicious > 0 || vt.suspicious > 0)) {
+    const n = vt.malicious + vt.suspicious;
+    return {
+      level: 'warning',
+      label: `Low-confidence warning — ${n} security ${n === 1 ? 'engine' : 'engines'} flagged this. Likely a false alarm, but proceed with caution.`,
+    };
+  }
   if (gsb.checked || vt.checked) return { level: 'safe', label: 'No threats detected' };
   return { level: 'unknown', label: 'Could not check this URL right now' };
 }
