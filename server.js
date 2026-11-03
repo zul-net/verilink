@@ -1,67 +1,37 @@
 require('dotenv').config();
 const express = require('express');
-const fetch = require('node-fetch');
-const path = require('path');
-const rateLimit = require('express-rate-limit');
+const cors = require('cors');
 const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const FETCH_TIMEOUT_MS = 15_000;
-
 const GSB_KEY = process.env.GOOGLE_SAFE_BROWSING_API_KEY;
 const VT_KEY = process.env.VIRUSTOTAL_API_KEY;
-const TRUST_PROXY = process.env.TRUST_PROXY ?? 1;
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+  .split(',').map((s) => s.trim().replace(/\/$/, '')).filter(Boolean);
 
-app.use(express.json());
+if (!GSB_KEY || !VT_KEY) console.warn('Warning: API keys missing - scans will be limited.');
+if (!ALLOWED_ORIGINS.length) console.warn('Warning: ALLOWED_ORIGINS is empty - browsers will be blocked by CORS.');
 
-function fetchWithTimeout(url, options = {}, timeout = FETCH_TIMEOUT_MS) {
-  const timeoutPromise = new Promise((_, reject) => {
-    const id = setTimeout(() => reject(new Error(`Request timed out after ${timeout}ms`)), timeout);
-    options.signal?.addEventListener('abort', () => clearTimeout(id));
-  });
+app.set('trust proxy', 1);
+app.disable('x-powered-by');
+app.use(helmet({
+  contentSecurityPolicy: { directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"] } },
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 
-  return Promise.race([fetch(url, options), timeoutPromise]);
-}
-
-// Security headers — HSTS, CSP, clickjacking protection, and more, all in one.
-// CSP is customized to allow the Google Fonts this app actually uses; nothing broader.
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        fontSrc: ["'self'", "https://fonts.gstatic.com"],
-        scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:"],
-        connectSrc: ["'self'"],
-        frameAncestors: ["'none'"], // blocks clickjacking (site can't be iframed)
-        objectSrc: ["'none'"],
-        baseUri: ["'self'"],
-      },
-    },
-    hsts: {
-      maxAge: 31536000, // 1 year, standard HSTS duration
-      includeSubDomains: true,
-      preload: true,
-    },
-  })
-);
-
-// Helmet doesn't set Permissions-Policy by default — this app doesn't need
-// camera, microphone, or location access, so explicitly block all three.
-app.use((req, res, next) => {
-  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  next();
-});
-
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Limit each visitor to 10 scans per 15 minutes — protects your VirusTotal/
-// Google Safe Browsing quota and Render usage hours from abuse or bots.
-// Render sits behind a proxy, so trust it to read the real visitor IP.
-app.set('trust proxy', TRUST_PROXY);
+app.use(cors({
+  origin(origin, cb) {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+    cb(null, false);
+  },
+  methods: ['POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type'],
+  maxAge: 86400,
+}));
+app.use(express.json({ limit: '10kb' }));
 
 const scanLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -71,174 +41,96 @@ const scanLimiter = rateLimit({
   message: { error: 'Too many scans from this device. Please wait a few minutes and try again.' },
 });
 
-// ---- Helpers ----
-
-// Base64url-encode a URL the way VirusTotal expects for its "url id"
-function vtUrlId(url) {
-  return Buffer.from(url)
-    .toString('base64')
-    .replace(/=+$/, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
-}
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const vtUrlId = (url) => Buffer.from(url).toString('base64url');
 
 function isValidUrl(str) {
-  try {
-    const u = new URL(str);
-    return u.protocol === 'http:' || u.protocol === 'https:';
-  } catch {
-    return false;
-  }
+  try { const u = new URL(str); return u.protocol === 'http:' || u.protocol === 'https:'; }
+  catch { return false; }
 }
 
-// ---- Google Safe Browsing ----
-async function checkGoogleSafeBrowsing(targetUrl) {
-  if (!GSB_KEY) return { checked: false, reason: 'No API key configured' };
-
-  const body = {
-    client: { clientId: 'verilink', clientVersion: '1.0.0' },
-    threatInfo: {
-      threatTypes: [
-        'MALWARE',
-        'SOCIAL_ENGINEERING',
-        'UNWANTED_SOFTWARE',
-        'POTENTIALLY_HARMFUL_APPLICATION'
-      ],
-      platformTypes: ['ANY_PLATFORM'],
-      threatEntryTypes: ['URL'],
-      threatEntries: [{ url: targetUrl }]
-    }
-  };
-
-  const res = await fetchWithTimeout(
-    `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${GSB_KEY}`,
-    {
+async function checkGoogleSafeBrowsing(url) {
+  if (!GSB_KEY) return { checked: false, error: 'Not configured' };
+  try {
+    const res = await fetch(`https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${GSB_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    }
-  );
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Google Safe Browsing error (${res.status}): ${text}`);
-  }
-
-  const data = await res.json();
-  const matches = data.matches || [];
-  return {
-    checked: true,
-    flagged: matches.length > 0,
-    threatTypes: matches.map(m => m.threatType)
-  };
+      body: JSON.stringify({
+        client: { clientId: 'verilink', clientVersion: '2.0.0' },
+        threatInfo: {
+          threatTypes: ['MALWARE', 'SOCIAL_ENGINEERING', 'UNWANTED_SOFTWARE', 'POTENTIALLY_HARMFUL_APPLICATION'],
+          platformTypes: ['ANY_PLATFORM'],
+          threatEntryTypes: ['URL'],
+          threatEntries: [{ url }],
+        },
+      }),
+    });
+    if (!res.ok) return { checked: false, error: `HTTP ${res.status}` };
+    const matches = (await res.json()).matches || [];
+    return { checked: true, flagged: matches.length > 0, threats: matches.map((m) => m.threatType) };
+  } catch { return { checked: false, error: 'Request failed' }; }
 }
 
-// ---- VirusTotal ----
-async function checkVirusTotal(targetUrl) {
-  if (!VT_KEY) return { checked: false, reason: 'No API key configured' };
-
-  const id = vtUrlId(targetUrl);
-
-  // Try to fetch an existing analysis first (fast path, no quota spent on submission)
-  let res = await fetchWithTimeout(`https://www.virustotal.com/api/v3/urls/${id}`, {
-    headers: { 'x-apikey': VT_KEY }
-  });
-
-  if (res.status === 404) {
-    // Not scanned before — submit it
-    const submitRes = await fetchWithTimeout('https://www.virustotal.com/api/v3/urls', {
-      method: 'POST',
-      headers: {
-        'x-apikey': VT_KEY,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: `url=${encodeURIComponent(targetUrl)}`
-    });
-
-    if (!submitRes.ok) {
-      const text = await submitRes.text();
-      throw new Error(`VirusTotal submit error (${submitRes.status}): ${text}`);
-    }
-
-    const submitData = await submitRes.json();
-    const analysisId = submitData.data.id;
-
-    // Poll the analysis a few times — VT scans take a few seconds
-    let stats = null;
-    for (let i = 0; i < 6; i++) {
-      await new Promise(r => setTimeout(r, 2500));
-      const analysisRes = await fetchWithTimeout(
-        `https://www.virustotal.com/api/v3/analyses/${analysisId}`,
-        { headers: { 'x-apikey': VT_KEY } }
-      );
-      if (!analysisRes.ok) continue;
-      const analysisData = await analysisRes.json();
-      if (analysisData.data.attributes.status === 'completed') {
-        stats = analysisData.data.attributes.stats;
-        break;
+async function checkVirusTotal(url) {
+  if (!VT_KEY) return { checked: false, error: 'Not configured' };
+  const headers = { 'x-apikey': VT_KEY };
+  try {
+    const res = await fetch(`https://www.virustotal.com/api/v3/urls/${vtUrlId(url)}`, { headers });
+    let stats;
+    if (res.status === 404) {
+      const sub = await fetch('https://www.virustotal.com/api/v3/urls', {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ url }).toString(),
+      });
+      if (!sub.ok) return { checked: false, error: `HTTP ${sub.status}` };
+      const id = (await sub.json()).data.id;
+      for (let i = 0; i < 6; i++) {
+        await sleep(2500);
+        const a = await fetch(`https://www.virustotal.com/api/v3/analyses/${id}`, { headers });
+        if (!a.ok) continue;
+        const ad = await a.json();
+        if (ad.data.attributes.status === 'completed') { stats = ad.data.attributes.stats; break; }
       }
-    }
-
+      if (!stats) return { checked: false, error: 'Analysis timed out' };
+    } else if (res.ok) {
+      stats = (await res.json()).data.attributes.last_analysis_stats;
+    } else return { checked: false, error: `HTTP ${res.status}` };
     return {
       checked: true,
-      pending: stats === null,
-      stats: stats || null
+      malicious: stats.malicious || 0, suspicious: stats.suspicious || 0,
+      harmless: stats.harmless || 0, undetected: stats.undetected || 0,
     };
-  }
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`VirusTotal error (${res.status}): ${text}`);
-  }
-
-  const data = await res.json();
-  const stats = data.data.attributes.last_analysis_stats;
-  return { checked: true, pending: false, stats };
+  } catch { return { checked: false, error: 'Request failed' }; }
 }
 
-// ---- Combined verdict ----
 function buildVerdict(gsb, vt) {
-  const gsbFlagged = gsb.checked && gsb.flagged;
-  const vtMalicious = vt.checked && vt.stats ? vt.stats.malicious || 0 : 0;
-  const vtSuspicious = vt.checked && vt.stats ? vt.stats.suspicious || 0 : 0;
-
-  if (gsbFlagged || vtMalicious > 0) {
-    return { level: 'danger', label: 'Threat detected' };
-  }
-  if (vtSuspicious > 0) {
+  if ((gsb.checked && gsb.flagged) || (vt.checked && vt.malicious > 0))
+    return { level: 'danger', label: 'Dangerous — do not visit this site' };
+  if (vt.checked && vt.suspicious > 0)
     return { level: 'warning', label: 'Suspicious — proceed with caution' };
-  }
-  if ((gsb.checked || vt.checked) && !gsbFlagged && vtMalicious === 0) {
-    return { level: 'safe', label: 'No threats found' };
-  }
-  return { level: 'unknown', label: 'Unable to verify' };
+  if (gsb.checked || vt.checked) return { level: 'safe', label: 'No threats detected' };
+  return { level: 'unknown', label: 'Could not check this URL right now' };
 }
 
-// ---- API route ----
+app.get('/', (req, res) => res.json({ service: 'verilink-api', status: 'ok' }));
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
 app.post('/api/check', scanLimiter, async (req, res) => {
-  const { url } = req.body;
-
-  if (!url || !isValidUrl(url)) {
-    return res.status(400).json({ error: 'Please provide a valid http(s) URL.' });
-  }
-
+  const url = typeof req.body?.url === 'string' ? req.body.url.trim() : '';
+  if (!url || url.length > 2048 || !isValidUrl(url))
+    return res.status(400).json({ error: 'Please enter a valid URL starting with http:// or https://' });
   try {
-    const [gsb, vt] = await Promise.all([
-      checkGoogleSafeBrowsing(url).catch(err => ({ checked: false, error: err.message })),
-      checkVirusTotal(url).catch(err => ({ checked: false, error: err.message }))
-    ]);
-
-    const verdict = buildVerdict(gsb, vt);
-
-    res.json({ url, verdict, googleSafeBrowsing: gsb, virusTotal: vt });
-  } catch (err) {
-    res.status(500).json({ error: 'Something went wrong while scanning that URL.' });
+    const [googleSafeBrowsing, virusTotal] = await Promise.all([checkGoogleSafeBrowsing(url), checkVirusTotal(url)]);
+    res.json({ url, verdict: buildVerdict(googleSafeBrowsing, virusTotal), googleSafeBrowsing, virusTotal });
+  } catch {
+    res.status(500).json({ error: 'Something went wrong while scanning. Please try again.' });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`VeriLink running at http://localhost:${PORT}`);
-  if (!GSB_KEY || !VT_KEY) {
-    console.warn('Warning: missing API key(s) in .env — check .env.example');
-  }
+app.use((err, req, res, next) => {
+  if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'Invalid request.' });
+  res.status(500).json({ error: 'Something went wrong.' });
 });
+
+app.listen(PORT, () => console.log(`VeriLink API listening on ${PORT}`));
